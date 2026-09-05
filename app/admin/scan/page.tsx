@@ -569,10 +569,10 @@ export default function AdminScanPage() {
                     onChange={(e) => setKelompokBaru(e.target.value)}
                     className="w-full p-2.5 border rounded-lg outline-none bg-white"
                   >
-                    <option value="Gonjen 1">Gonjen 1</option>
-                    <option value="Gonjen 2">Gonjen 2</option>
-                    <option value="Kembaran">Kembaran</option>
-                    <option value="Sembung">Sembung</option>
+                    <option value="GONJEN 1">GONJEN 1</option>
+                    <option value="GONJEN 2">GONJEN 2</option>
+                    <option value="KEMBARAN">KEMBARAN</option>
+                    <option value="SEMBUNG">SEMBUNG</option>
                   </select>
                 </div>
 
