@@ -31,6 +31,7 @@ export default function AdminScanPage() {
   const [cameraError, setCameraError] = useState('')
   const [scanningImage, setScanningImage] = useState(false)
   const [requestingCamera, setRequestingCamera] = useState(false)
+  const [isCameraActive, setIsCameraActive] = useState(false) // State untuk status aktif kamera
   
   // State Input Manual Data Ada
   const [selectedKelompokFilter, setSelectedKelompokFilter] = useState<string>('')
@@ -94,12 +95,14 @@ export default function AdminScanPage() {
           },
           () => {}
         )
+        setIsCameraActive(true) // Set aktif otomatis jika scanner berhasil start
       } catch (error) {
         if (cancelled) return
         const message = error instanceof Error ? error.message : 'Akses kamera gagal.'
         setCameraError(
           `${message} Untuk development, gunakan http://localhost atau HTTPS. HTTP melalui alamat IP/LAN diblokir browser.`
         )
+        setIsCameraActive(false)
       }
     }
 
@@ -117,6 +120,7 @@ export default function AdminScanPage() {
       stopScanner()
       scannerRef.current = null
       startScannerRef.current = null
+      setIsCameraActive(false)
     }
   }, [selectedAcara])
 
@@ -287,6 +291,19 @@ export default function AdminScanPage() {
       return
     }
 
+    // Jika kamera sedang aktif, tombol berfungsi sebagai Stop Kamera
+    if (isCameraActive) {
+      try {
+        if (scannerRef.current?.isScanning) {
+          await scannerRef.current.stop()
+        }
+        setIsCameraActive(false)
+      } catch {
+        // Tangani error saat menghentikan scanner
+      }
+      return
+    }
+
     setRequestingCamera(true)
     setCameraError('')
 
@@ -296,6 +313,7 @@ export default function AdminScanPage() {
       if (!scannerRef.current?.isScanning) {
         await startScannerRef.current?.()
       }
+      setIsCameraActive(true)
     } catch (error) {
       const message = error instanceof DOMException && error.name === 'NotAllowedError'
         ? 'Izin kamera ditolak. Buka pengaturan situs/browser lalu izinkan kamera.'
@@ -305,6 +323,7 @@ export default function AdminScanPage() {
       setCameraError(
         `${message} Untuk development, gunakan http://localhost atau HTTPS. HTTP melalui alamat IP/LAN diblokir browser.`
       )
+      setIsCameraActive(false)
     } finally {
       setRequestingCamera(false)
     }
@@ -442,10 +461,16 @@ export default function AdminScanPage() {
                 type="button"
                 onClick={requestCameraAccess}
                 disabled={requestingCamera || scanningImage}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-gray-300 ${
+                  isCameraActive ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
                 <Camera className="h-4 w-4" />
-                {requestingCamera ? 'Meminta akses kamera...' : 'Izinkan Akses Kamera'}
+                {requestingCamera 
+                  ? 'Meminta akses kamera...' 
+                  : isCameraActive 
+                    ? 'Stop Kamera' 
+                    : 'Izinkan Akses Kamera'}
               </button>
               <label className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">
                 <ImageIcon className="h-4 w-4" />
