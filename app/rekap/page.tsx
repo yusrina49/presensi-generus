@@ -345,7 +345,7 @@ export default function RekapPage() {
                 viewMode === 'tahunan' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white'
               }`}
             >
-              <TableProperties className="w-4 h-4" /> Rekap Matriks Tahunan (H/I/A)
+              <TableProperties className="w-4 h-4" /> Rekap Matriks Tahunan
             </button>
           </div>
         </div>
@@ -713,7 +713,7 @@ export default function RekapPage() {
               </div>
             </>
           ) : (
-            /* --- TAMPILAN 2: REKAP TAHUNAN (MATRIKS H/I/A) --- */
+            /* --- TAMPILAN 2: REKAP TAHUNAN (MATRIKS H/I/A --- */
             <>
               <div className="hidden print:block mb-4 text-center">
                 <h1 className="text-lg font-black tracking-wide text-gray-900 uppercase">
