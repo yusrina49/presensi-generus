@@ -128,7 +128,15 @@ export default function AdminScanPage() {
     const { data } = await supabase.from('acara').select('*').order('tanggal', { ascending: true })
     if (data && data.length > 0) {
       setAcaraList(data)
-      setSelectedAcara(data[0].id)
+      
+      // Pilih otomatis acara pertama yang tanggalnya belum lewat
+      const today = new Date().toISOString().split('T')[0]
+      const validAcara = data.find((a) => a.tanggal >= today)
+      if (validAcara) {
+        setSelectedAcara(validAcara.id)
+      } else {
+        setSelectedAcara(data[0].id)
+      }
     }
   }
 
@@ -395,6 +403,9 @@ export default function AdminScanPage() {
     await submitPresensi(newGen.id, newGen.nama, 'Manual Admin')
   }
 
+  // Mendapatkan tanggal hari ini (format YYYY-MM-DD) untuk pembanding
+  const today = new Date().toISOString().split('T')[0]
+
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-6 relative">
       
@@ -433,11 +444,19 @@ export default function AdminScanPage() {
           className="w-full p-3 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 font-medium text-sm sm:text-base outline-none"
         >
           <option value="">-- Pilih Acara Aktif --</option>
-          {acaraList.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nama_acara} - {a.tanggal} ({a.lokasi})
-            </option>
-          ))}
+          {acaraList.map((a) => {
+            const isPast = a.tanggal < today
+            return (
+              <option 
+                key={a.id} 
+                value={a.id} 
+                disabled={isPast}
+                className={isPast ? "text-gray-400 bg-gray-100" : ""}
+              >
+                {a.nama_acara} - {a.tanggal} ({a.lokasi}) {isPast ? "(Sudah Lewat)" : ""}
+              </option>
+            )
+          })}
         </select>
       </div>
 
