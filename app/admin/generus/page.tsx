@@ -25,6 +25,7 @@ interface Generus {
   kelompok: string
   jenis_kelamin: string
   kelas?: string
+  status_sambung?: 'Mukim' | 'Sambang'
   qr_code?: string
   qr_code_id?: string
 }
@@ -51,6 +52,12 @@ const normalizeJenisKelamin = (value: unknown) => {
   if (/^(p|pr|perempuan|wanita|female|f)$/.test(normalized)) return 'Perempuan'
   if (/^(l|lk|laki[- ]?laki|pria|male|m)$/.test(normalized)) return 'Laki-laki'
   return normalized ? toExcelText(value) : 'Laki-laki'
+}
+
+const normalizeStatusSambung = (value: unknown): 'Mukim' | 'Sambang' => {
+  const normalized = toExcelText(value).toLowerCase()
+  if (/^sambang$/.test(normalized)) return 'Sambang'
+  return 'Mukim' // Default Mukim
 }
 
 // Helper function untuk mengurutkan: Kelompok -> Nama
@@ -84,6 +91,7 @@ export default function AdminGenerusPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedKelompok, setSelectedKelompok] = useState('Semua Kelompok')
+  const [selectedStatusSambung, setSelectedStatusSambung] = useState('Semua Status')
 
   // State Modal CRUD
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -94,6 +102,7 @@ export default function AdminGenerusPage() {
     kelompok: 'GONJEN 1',
     jenis_kelamin: 'Laki-laki',
     kelas: 'Pra Remaja',
+    status_sambung: 'Mukim',
   })
 
   // State File Import
@@ -129,6 +138,7 @@ export default function AdminGenerusPage() {
           kelompok: formData.kelompok,
           jenis_kelamin: formData.jenis_kelamin,
           kelas: formData.kelas,
+          status_sambung: formData.status_sambung,
         })
         .eq('id', editingData.id)
 
@@ -142,6 +152,7 @@ export default function AdminGenerusPage() {
           kelompok: formData.kelompok,
           jenis_kelamin: formData.jenis_kelamin,
           kelas: formData.kelas,
+          status_sambung: formData.status_sambung,
         },
       ])
 
@@ -173,12 +184,14 @@ export default function AdminGenerusPage() {
         kelompok: 'GONJEN 1',
         jenis_kelamin: 'Laki-laki',
         kelas: 'Pra Remaja',
+        status_sambung: 'Mukim',
       },
       {
         nama: 'Contoh Nama Generus 2',
         kelompok: 'GONJEN 2',
         jenis_kelamin: 'Perempuan',
         kelas: 'Remaja',
+        status_sambung: 'Sambang',
       },
     ]
     const worksheet = XLSX.utils.json_to_sheet(templateData)
@@ -199,6 +212,7 @@ export default function AdminGenerusPage() {
       Kelompok: item.kelompok || '-',
       'Jenis Kelamin': item.jenis_kelamin || '-',
       'Kelas / Tingkat': item.kelas || '-',
+      'Status Sambung': item.status_sambung || 'Mukim',
       'Kode QR / ID': item.qr_code_id || item.qr_code || item.id || '-',
     }))
 
@@ -212,6 +226,7 @@ export default function AdminGenerusPage() {
       { wch: 15 },
       { wch: 15 },
       { wch: 18 },
+      { wch: 15 },
       { wch: 25 },
     ]
 
@@ -256,6 +271,9 @@ export default function AdminGenerusPage() {
               normalizedRow.jeniskelaminlp ||
               normalizedRow.jk ||
               normalizedRow.gender
+            const statusSambung =
+              normalizedRow.statussambung || normalizedRow.status || normalizedRow.sambung
+
             return {
               nama,
               kelompok: toExcelText(normalizedRow.kelompok, 'GONJEN 1'),
@@ -264,6 +282,7 @@ export default function AdminGenerusPage() {
                 normalizedRow.kelas || normalizedRow.kelastingkat,
                 'Pra Remaja'
               ),
+              status_sambung: normalizeStatusSambung(statusSambung),
             }
           })
           .filter((item) => item.nama !== '')
@@ -296,6 +315,7 @@ export default function AdminGenerusPage() {
       kelompok: 'GONJEN 1',
       jenis_kelamin: 'Laki-laki',
       kelas: 'Pra Remaja',
+      status_sambung: 'Mukim',
     })
     setIsModalOpen(true)
   }
@@ -307,6 +327,7 @@ export default function AdminGenerusPage() {
       kelompok: item.kelompok || 'GONJEN 1',
       jenis_kelamin: item.jenis_kelamin || 'Laki-laki',
       kelas: item.kelas || 'Pra Remaja',
+      status_sambung: item.status_sambung || 'Mukim',
     })
     setIsModalOpen(true)
   }
@@ -316,27 +337,25 @@ export default function AdminGenerusPage() {
     setEditingData(null)
   }
 
-  // Filtering Data berdasarkan Kelompok dan Pencarian
+  // Filtering Data berdasarkan Kelompok, Status Sambung, dan Pencarian
   const kelompokList = Array.from(
     new Set(generusList.map((g) => g.kelompok).filter(Boolean))
   )
   const filteredGenerus = generusList.filter((g) => {
     const matchKelompok =
       selectedKelompok === 'Semua Kelompok' || g.kelompok === selectedKelompok
+    const matchStatus =
+      selectedStatusSambung === 'Semua Status' || g.status_sambung === selectedStatusSambung
     const matchSearch =
       g.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (g.kelas && g.kelas.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchKelompok && matchSearch
+    return matchKelompok && matchStatus && matchSearch
   })
 
   // Ringkasan Statistik Dinamis
   const totalGenerus = filteredGenerus.length
-  const totalLaki = filteredGenerus.filter((g) =>
-    g.jenis_kelamin?.toLowerCase().includes('laki')
-  ).length
-  const totalPerempuan = filteredGenerus.filter((g) =>
-    g.jenis_kelamin?.toLowerCase().includes('perempuan')
-  ).length
+  const totalMukim = filteredGenerus.filter((g) => g.status_sambung === 'Mukim' || !g.status_sambung).length
+  const totalSambang = filteredGenerus.filter((g) => g.status_sambung === 'Sambang').length
 
   // Rekap Hitung Jumlah Generus Per Jenjang Kelas (Dinamis berdasarkan filter)
   const rekapKelas = filteredGenerus.reduce((acc, curr) => {
@@ -353,7 +372,7 @@ export default function AdminGenerusPage() {
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Data Generus</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Kelola dan lihat ringkasan data seluruh anggota generus.
+              Kelola dan lihat ringkasan data seluruh anggota generus beserta status mukim/sambang.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -399,19 +418,19 @@ export default function AdminGenerusPage() {
           </div>
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Laki-laki</p>
-              <p className="text-2xl font-extrabold text-blue-600 mt-1">{totalLaki}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mukim</p>
+              <p className="text-2xl font-extrabold text-purple-600 mt-1">{totalMukim}</p>
             </div>
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
               <Users className="w-5 h-5" />
             </div>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perempuan</p>
-              <p className="text-2xl font-extrabold text-pink-600 mt-1">{totalPerempuan}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sambang</p>
+              <p className="text-2xl font-extrabold text-amber-600 mt-1">{totalSambang}</p>
             </div>
-            <div className="p-3 bg-pink-50 text-pink-600 rounded-xl">
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
               <Users className="w-5 h-5" />
             </div>
           </div>
@@ -457,7 +476,7 @@ export default function AdminGenerusPage() {
             <select
               value={selectedKelompok}
               onChange={(e) => setSelectedKelompok(e.target.value)}
-              className="w-full sm:w-auto px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="Semua Kelompok">Semua Kelompok</option>
               {kelompokList.map((kel) => (
@@ -465,6 +484,15 @@ export default function AdminGenerusPage() {
                   {kel}
                 </option>
               ))}
+            </select>
+            <select
+              value={selectedStatusSambung}
+              onChange={(e) => setSelectedStatusSambung(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="Semua Status">Semua Status</option>
+              <option value="Mukim">Mukim</option>
+              <option value="Sambang">Sambang</option>
             </select>
           </div>
         </div>
@@ -479,6 +507,7 @@ export default function AdminGenerusPage() {
                   <th className="py-3.5 px-4">Kelompok</th>
                   <th className="py-3.5 px-4">Jenis Kelamin</th>
                   <th className="py-3.5 px-4">Kelas / Tingkat</th>
+                  <th className="py-3.5 px-4">Status Sambung</th>
                   <th className="py-3.5 px-4 text-center">Kode QR</th>
                   <th className="py-3.5 px-4 text-center">Aksi</th>
                 </tr>
@@ -486,13 +515,13 @@ export default function AdminGenerusPage() {
               <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                    <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
                       Memuat data generus...
                     </td>
                   </tr>
                 ) : filteredGenerus.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                    <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
                       Data tidak ditemukan.
                     </td>
                   </tr>
@@ -517,6 +546,17 @@ export default function AdminGenerusPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-slate-600 font-medium">{item.kelas || '-'}</td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                            item.status_sambung === 'Sambang'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-purple-50 text-purple-700 border border-purple-200'
+                          }`}
+                        >
+                          {item.status_sambung || 'Mukim'}
+                        </span>
+                      </td>
                       <td className="py-3.5 px-4 text-center font-mono text-slate-400 text-xs">
                         {item.qr_code_id || item.qr_code || item.id?.slice(0, 6).toUpperCase() || '-'}
                       </td>
@@ -571,18 +611,36 @@ export default function AdminGenerusPage() {
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Kelompok</label>
-                <select
-                  value={formData.kelompok}
-                  onChange={(e) => setFormData({ ...formData, kelompok: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="GONJEN 1">GONJEN 1</option>
-                  <option value="GONJEN 2">GONJEN 2</option>
-                  <option value="KEMBARAN">KEMBARAN</option>
-                  <option value="SEMBUNG">SEMBUNG</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Kelompok</label>
+                  <select
+                    value={formData.kelompok}
+                    onChange={(e) => setFormData({ ...formData, kelompok: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="GONJEN 1">GONJEN 1</option>
+                    <option value="GONJEN 2">GONJEN 2</option>
+                    <option value="KEMBARAN">KEMBARAN</option>
+                    <option value="SEMBUNG">SEMBUNG</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Status Sambung</label>
+                  <select
+                    value={formData.status_sambung}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        status_sambung: e.target.value as 'Mukim' | 'Sambang',
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="Mukim">Mukim</option>
+                    <option value="Sambang">Sambang</option>
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -590,7 +648,7 @@ export default function AdminGenerusPage() {
                   <select
                     value={formData.jenis_kelamin}
                     onChange={(e) => setFormData({ ...formData, jenis_kelamin: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="Laki-laki">Laki-laki</option>
                     <option value="Perempuan">Perempuan</option>
@@ -601,7 +659,7 @@ export default function AdminGenerusPage() {
                   <select
                     value={formData.kelas}
                     onChange={(e) => setFormData({ ...formData, kelas: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="Caberawit">Caberawit</option>
                     <option value="Pra Remaja">Pra Remaja</option>
@@ -648,7 +706,7 @@ export default function AdminGenerusPage() {
             </div>
             <div className="space-y-4 text-xs sm:text-sm">
               <p className="text-slate-500">
-                Gunakan template Excel resmi agar format kolom sesuai saat diunggah ke sistem.
+                Gunakan template Excel resmi agar format kolom (termasuk status sambung) sesuai saat diunggah.
               </p>
               <div className="border-2 border-dashed border-slate-200 p-6 rounded-2xl text-center bg-slate-50/50">
                 <input
