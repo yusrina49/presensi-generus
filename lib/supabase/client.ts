@@ -9,5 +9,4 @@ export const createClient = () =>
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
-    }
   );
