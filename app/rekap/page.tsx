@@ -345,7 +345,7 @@ export default function RekapPage() {
                 viewMode === 'tahunan' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white'
               }`}
             >
-              <TableProperties className="w-4 h-4" /> Rekap Matriks Tahunan
+              <TableProperties className="w-4 h-4" /> Rekap Matriks Tahunan (H/I/A)
             </button>
           </div>
         </div>
@@ -519,7 +519,7 @@ export default function RekapPage() {
                     </div>
                   </div>
 
-                  {/* Rincian L & Perempuan & Kelompok */}
+                  {/* Rincian L & Perempuan & Kelompok (Hanya tampil jika "Semua" kelompok dipilih) */}
                   {(() => {
                     const listL = filteredGenerus.filter((g) => g.jenis_kelamin?.toLowerCase() === 'laki-laki')
                     const totalL = listL.length
@@ -535,7 +535,7 @@ export default function RekapPage() {
                     const alpaP = listP.filter((g) => presensiMap[g.id]?.status === 'Alpa / Belum Presensi').length
                     const persentaseP = totalP > 0 ? ((hadirP / totalP) * 100).toFixed(1) : '0'
 
-                    const daftarKelompok = Array.from(new Set(filteredGenerus.map((g) => g.kelompok))).filter(Boolean)
+                    const daftarKelompok = Array.from(new Set(generusList.map((g) => g.kelompok))).filter(Boolean)
 
                     return (
                       <div className="space-y-3 pt-1">
@@ -597,39 +597,41 @@ export default function RekapPage() {
                           </div>
                         </div>
 
-                        {/* Rincian Per Kelompok */}
-                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                          <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide border-b pb-2">
-                            Rincian Per Kelompok
-                          </h3>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {daftarKelompok.map((kelompok) => {
-                              const listKeluarga = filteredGenerus.filter((g) => g.kelompok === kelompok)
-                              const totalK = listKeluarga.length
-                              const hadirK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Hadir').length
-                              const izinK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Izin').length
-                              const alpaK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Alpa / Belum Presensi').length
-                              const persentaseK = totalK > 0 ? ((hadirK / totalK) * 100).toFixed(1) : '0'
+                        {/* Rincian Per Kelompok (Hanya tampil jika Filter Kelompok = 'Semua') */}
+                        {selectedKelompok === 'Semua' && (
+                          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                            <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide border-b pb-2">
+                              Rincian Per Kelompok
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                              {daftarKelompok.map((kelompok) => {
+                                const listKeluarga = generusList.filter((g) => g.kelompok === kelompok && (selectedJK === 'Semua' || g.jenis_kelamin === selectedJK))
+                                const totalK = listKeluarga.length
+                                const hadirK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Hadir').length
+                                const izinK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Izin').length
+                                const alpaK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Alpa / Belum Presensi').length
+                                const persentaseK = totalK > 0 ? ((hadirK / totalK) * 100).toFixed(1) : '0'
 
-                              return (
-                                <div key={kelompok} className="bg-gray-50 p-3 rounded-lg border border-gray-200/80 space-y-2">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-xs font-bold text-gray-800">{kelompok}</span>
-                                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                                      {persentaseK}%
-                                    </span>
+                                return (
+                                  <div key={kelompok} className="bg-gray-50 p-3 rounded-lg border border-gray-200/80 space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-xs font-bold text-gray-800">{kelompok}</span>
+                                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                        {persentaseK}%
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-gray-600 grid grid-cols-2 gap-y-1 pt-1 border-t border-gray-200">
+                                      <div>Total: <span className="font-semibold text-gray-800">{totalK}</span></div>
+                                      <div>Hadir: <span className="font-semibold text-green-600">{hadirK}</span></div>
+                                      <div>Izin: <span className="font-semibold text-amber-600">{izinK}</span></div>
+                                      <div>Alpa: <span className="font-semibold text-gray-500">{alpaK}</span></div>
+                                    </div>
                                   </div>
-                                  <div className="text-[11px] text-gray-600 grid grid-cols-2 gap-y-1 pt-1 border-t border-gray-200">
-                                    <div>Total: <span className="font-semibold text-gray-800">{totalK}</span></div>
-                                    <div>Hadir: <span className="font-semibold text-green-600">{hadirK}</span></div>
-                                    <div>Izin: <span className="font-semibold text-amber-600">{izinK}</span></div>
-                                    <div>Alpa: <span className="font-semibold text-gray-500">{alpaK}</span></div>
-                                  </div>
-                                </div>
-                              )
-                            })}
+                                )
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )
                   })()}
@@ -713,7 +715,7 @@ export default function RekapPage() {
               </div>
             </>
           ) : (
-            /* --- TAMPILAN 2: REKAP TAHUNAN (MATRIKS H/I/A --- */
+            /* --- TAMPILAN 2: REKAP TAHUNAN (MATRIKS H/I/A) --- */
             <>
               <div className="hidden print:block mb-4 text-center">
                 <h1 className="text-lg font-black tracking-wide text-gray-900 uppercase">
