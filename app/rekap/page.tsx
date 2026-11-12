@@ -259,9 +259,15 @@ export default function RekapPage() {
           'Kelas / Tingkat': generus.kelas,
         }
 
+        let hadirCount = 0
         acaraList.forEach((acara) => {
-          rowData[acara.nama_acara] = presensiGrid[generus.id]?.[acara.id] || 'A'
+          const st = presensiGrid[generus.id]?.[acara.id] || 'A'
+          rowData[acara.nama_acara] = st
+          if (st === 'H') hadirCount += 1
         })
+
+        const totalAcara = acaraList.length
+        rowData['Persentase Kehadiran'] = totalAcara > 0 ? `${((hadirCount / totalAcara) * 100).toFixed(1)}%` : '0%'
 
         return rowData
       })
@@ -732,43 +738,59 @@ export default function RekapPage() {
                               <div className="text-[10px] text-gray-400 font-normal">{acara.tanggal}</div>
                             </th>
                           ))}
+                          <th className="p-3 text-center bg-blue-50 text-blue-800 min-w-[90px]">
+                            Persentase
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {filteredGenerus.length === 0 ? (
                           <tr>
-                            <td colSpan={2 + acaraList.length} className="p-8 text-center text-gray-400">
+                            <td colSpan={3 + acaraList.length} className="p-8 text-center text-gray-400">
                               Tidak ada data generus.
                             </td>
                           </tr>
                         ) : (
-                          filteredGenerus.map((generus) => (
-                            <tr key={generus.id} className="hover:bg-gray-50 transition">
-                              <td className="p-3 border-r font-bold text-gray-900 sticky left-0 bg-white z-10 uppercase">
-                                {generus.nama}
-                                <div className="text-[10px] font-normal text-gray-500">{generus.kelas}</div>
-                              </td>
-                              <td className="p-3 border-r text-gray-700">{generus.kelompok}</td>
-                              {acaraList.map((acara) => {
-                                const status = presensiGrid[generus.id]?.[acara.id] || 'A'
-                                return (
-                                  <td key={acara.id} className="p-3 border-r text-center font-bold">
-                                    <span
-                                      className={`inline-block px-2 py-0.5 rounded text-[11px] ${
-                                        status === 'H'
-                                          ? 'bg-green-100 text-green-700'
-                                          : status === 'I'
-                                            ? 'bg-amber-100 text-amber-700'
-                                            : 'bg-gray-100 text-gray-400'
-                                      }`}
-                                    >
-                                      {status}
-                                    </span>
-                                  </td>
-                                )
-                              })}
-                            </tr>
-                          ))
+                          filteredGenerus.map((generus) => {
+                            const totalAcara = acaraList.length
+                            let hadirCount = 0
+                            acaraList.forEach((acara) => {
+                              const st = presensiGrid[generus.id]?.[acara.id]
+                              if (st === 'H') hadirCount += 1
+                            })
+                            const persentaseIndividu = totalAcara > 0 ? ((hadirCount / totalAcara) * 100).toFixed(1) : '0'
+
+                            return (
+                              <tr key={generus.id} className="hover:bg-gray-50 transition">
+                                <td className="p-3 border-r font-bold text-gray-900 sticky left-0 bg-white z-10 uppercase">
+                                  {generus.nama}
+                                  <div className="text-[10px] font-normal text-gray-500">{generus.kelas}</div>
+                                </td>
+                                <td className="p-3 border-r text-gray-700">{generus.kelompok}</td>
+                                {acaraList.map((acara) => {
+                                  const status = presensiGrid[generus.id]?.[acara.id] || 'A'
+                                  return (
+                                    <td key={acara.id} className="p-3 border-r text-center font-bold">
+                                      <span
+                                        className={`inline-block px-2 py-0.5 rounded text-[11px] ${
+                                          status === 'H'
+                                            ? 'bg-green-100 text-green-700'
+                                            : status === 'I'
+                                              ? 'bg-amber-100 text-amber-700'
+                                              : 'bg-gray-100 text-gray-400'
+                                        }`}
+                                      >
+                                        {status}
+                                      </span>
+                                    </td>
+                                  )
+                                })}
+                                <td className="p-3 text-center font-bold text-blue-600 bg-blue-50/30">
+                                  {persentaseIndividu}%
+                                </td>
+                              </tr>
+                            )
+                          })
                         )}
                       </tbody>
                     </table>
