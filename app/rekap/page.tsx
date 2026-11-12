@@ -362,31 +362,149 @@ export default function RekapPage() {
           )}
 
           {selectedAcara && (
-            <div className="grid grid-cols-5 gap-3 print:gap-2 mb-4">
-              <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
-                <p className="text-[11px] text-gray-600 font-semibold leading-tight">Total Generus</p>
-                <p className="text-lg print:text-base font-bold text-gray-900 mt-1">{totalGenerus}</p>
+            <div className="space-y-4 mb-4">
+              {/* Statistik Utama */}
+              <div className="grid grid-cols-5 gap-3 print:gap-2">
+                <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
+                  <p className="text-[11px] text-gray-600 font-semibold leading-tight">Total Generus</p>
+                  <p className="text-lg print:text-base font-bold text-gray-900 mt-1">{totalGenerus}</p>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
+                  <p className="text-[11px] text-gray-600 font-semibold leading-tight">Hadir</p>
+                  <p className="text-lg print:text-base font-bold text-green-600 mt-1">{totalHadir}</p>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
+                  <p className="text-[11px] text-gray-600 font-semibold leading-tight">Izin</p>
+                  <p className="text-lg print:text-base font-bold text-amber-600 mt-1">{totalIzin}</p>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
+                  <p className="text-[11px] text-gray-600 font-semibold leading-tight">Alpa</p>
+                  <p className="text-lg print:text-base font-bold text-gray-500 mt-1">{totalAlpa}</p>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
+                  <p className="text-[11px] text-gray-600 font-semibold leading-tight">Persentase</p>
+                  <p className="text-lg print:text-base font-bold text-blue-600 mt-1">{persentaseHadir}%</p>
+                </div>
               </div>
 
-              <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
-                <p className="text-[11px] text-gray-600 font-semibold leading-tight">Hadir</p>
-                <p className="text-lg print:text-base font-bold text-green-600 mt-1">{totalHadir}</p>
-              </div>
+              {/* Rincian Berdasarkan Jenis Kelamin (Laki-laki & Perempuan) & Kelompok */}
+              {(() => {
+                const listL = filteredGenerus.filter((g) => g.jenis_kelamin?.toLowerCase() === 'laki-laki')
+                const totalL = listL.length
+                const hadirL = listL.filter((g) => presensiMap[g.id]?.status === 'Hadir').length
+                const izinL = listL.filter((g) => presensiMap[g.id]?.status === 'Izin').length
+                const alpaL = listL.filter((g) => presensiMap[g.id]?.status === 'Alpa / Belum Presensi').length
+                const persentaseL = totalL > 0 ? ((hadirL / totalL) * 100).toFixed(1) : '0'
 
-              <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
-                <p className="text-[11px] text-gray-600 font-semibold leading-tight">Izin</p>
-                <p className="text-lg print:text-base font-bold text-amber-600 mt-1">{totalIzin}</p>
-              </div>
+                const listP = filteredGenerus.filter((g) => g.jenis_kelamin?.toLowerCase() === 'perempuan')
+                const totalP = listP.length
+                const hadirP = listP.filter((g) => presensiMap[g.id]?.status === 'Hadir').length
+                const izinP = listP.filter((g) => presensiMap[g.id]?.status === 'Izin').length
+                const alpaP = listP.filter((g) => presensiMap[g.id]?.status === 'Alpa / Belum Presensi').length
+                const persentaseP = totalP > 0 ? ((hadirP / totalP) * 100).toFixed(1) : '0'
 
-              <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
-                <p className="text-[11px] text-gray-600 font-semibold leading-tight">Alpa</p>
-                <p className="text-lg print:text-base font-bold text-gray-500 mt-1">{totalAlpa}</p>
-              </div>
+                const daftarKelompok = Array.from(new Set(filteredGenerus.map((g) => g.kelompok))).filter(Boolean)
 
-              <div className="bg-white p-3 rounded-xl print:rounded-lg shadow-sm print:shadow-none border border-gray-200 flex flex-col justify-between">
-                <p className="text-[11px] text-gray-600 font-semibold leading-tight">Persentase</p>
-                <p className="text-lg print:text-base font-bold text-blue-600 mt-1">{persentaseHadir}%</p>
-              </div>
+                return (
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Laki-laki */}
+                      <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm space-y-2">
+                        <div className="flex justify-between items-center border-b pb-1.5">
+                          <span className="text-xs font-bold text-gray-800 uppercase">Laki-laki (L)</span>
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {persentaseL}% (Total: {totalL})
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                          <div className="bg-gray-50 p-1.5 rounded">
+                            <span className="text-gray-500 block text-[10px]">Hadir</span>
+                            <span className="font-bold text-green-600">{hadirL}</span>
+                          </div>
+                          <div className="bg-gray-50 p-1.5 rounded">
+                            <span className="text-gray-500 block text-[10px]">Izin</span>
+                            <span className="font-bold text-amber-600">{izinL}</span>
+                          </div>
+                          <div className="bg-gray-50 p-1.5 rounded">
+                            <span className="text-gray-500 block text-[10px]">Alpa</span>
+                            <span className="font-bold text-gray-500">{alpaL}</span>
+                          </div>
+                          <div className="bg-blue-50/50 p-1.5 rounded border border-blue-100">
+                            <span className="text-blue-600 block text-[10px] font-semibold">Persen</span>
+                            <span className="font-bold text-blue-700">{persentaseL}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Perempuan */}
+                      <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm space-y-2">
+                        <div className="flex justify-between items-center border-b pb-1.5">
+                          <span className="text-xs font-bold text-gray-800 uppercase">Perempuan</span>
+                          <span className="text-xs font-semibold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">
+                            {persentaseP}% (Total: {totalP})
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                          <div className="bg-gray-50 p-1.5 rounded">
+                            <span className="text-gray-500 block text-[10px]">Hadir</span>
+                            <span className="font-bold text-green-600">{hadirP}</span>
+                          </div>
+                          <div className="bg-gray-50 p-1.5 rounded">
+                            <span className="text-gray-500 block text-[10px]">Izin</span>
+                            <span className="font-bold text-amber-600">{izinP}</span>
+                          </div>
+                          <div className="bg-gray-50 p-1.5 rounded">
+                            <span className="text-gray-500 block text-[10px]">Alpa</span>
+                            <span className="font-bold text-gray-500">{alpaP}</span>
+                          </div>
+                          <div className="bg-pink-50/50 p-1.5 rounded border border-pink-100">
+                            <span className="text-pink-600 block text-[10px] font-semibold">Persen</span>
+                            <span className="font-bold text-pink-700">{persentaseP}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rincian Per Kelompok */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                      <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide border-b pb-2">
+                        Rincian Per Kelompok
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {daftarKelompok.map((kelompok) => {
+                          const listKeluarga = filteredGenerus.filter((g) => g.kelompok === kelompok)
+                          const totalK = listKeluarga.length
+                          const hadirK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Hadir').length
+                          const izinK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Izin').length
+                          const alpaK = listKeluarga.filter((g) => presensiMap[g.id]?.status === 'Alpa / Belum Presensi').length
+                          const persentaseK = totalK > 0 ? ((hadirK / totalK) * 100).toFixed(1) : '0'
+
+                          return (
+                            <div key={kelompok} className="bg-gray-50 p-3 rounded-lg border border-gray-200/80 space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-gray-800">{kelompok}</span>
+                                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                  {persentaseK}%
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-gray-600 grid grid-cols-2 gap-y-1 pt-1 border-t border-gray-200">
+                                <div>Total: <span className="font-semibold text-gray-800">{totalK}</span></div>
+                                <div>Hadir: <span className="font-semibold text-green-600">{hadirK}</span></div>
+                                <div>Izin: <span className="font-semibold text-amber-600">{izinK}</span></div>
+                                <div>Alpa: <span className="font-semibold text-gray-500">{alpaK}</span></div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
 
